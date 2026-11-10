@@ -200,6 +200,7 @@ app.get('/api/answers/filter', async (req, res) => {
 app.post('/api/answers', async (req, res) => {
   try {
     const body = Array.isArray(req.body) ? req.body : [req.body];
+    
     // Sütunları təmizlə - yalnız mövcud sütunları saxla
     const cleanBody = body.map(a => {
       const clean = {
