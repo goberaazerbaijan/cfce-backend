@@ -196,14 +196,39 @@ app.get('/api/answers/filter', async (req, res) => {
   }
 });
 
-// Cavabları əlavə et (çoxlu)
+// ✅ DÜZƏLDİLMİŞ: Cavabları əlavə et (çoxlu) - user_image və needs_marker_review ilə
 app.post('/api/answers', async (req, res) => {
   try {
     const body = Array.isArray(req.body) ? req.body : [req.body];
-    const { data, error } = await supabase.from('answers').insert(body).select();
-    if (error) throw error;
+    // Sütunları təmizlə - yalnız mövcud sütunları saxla
+    const cleanBody = body.map(a => {
+      const clean = {
+        score_id: a.score_id,
+        part_id: a.part_id,
+        question_num: a.question_num,
+        user_answer: a.user_answer || null,
+        correct_answer: a.correct_answer || null,
+        is_correct: a.is_correct || false,
+        points: a.points || 0,
+        max_points: a.max_points || 1
+      };
+      // user_image varsa əlavə et
+      if (a.user_image) clean.user_image = a.user_image;
+      // needs_marker_review varsa əlavə et
+      if (a.needs_marker_review !== undefined) clean.needs_marker_review = a.needs_marker_review;
+      return clean;
+    });
+    
+    console.log('📝 Answers yazılır:', cleanBody.length, 'sual');
+    const { data, error } = await supabase.from('answers').insert(cleanBody).select();
+    if (error) {
+      console.error('❌ Supabase xətası:', error);
+      throw error;
+    }
+    console.log('✅ Answers yazıldı:', data.length);
     res.json(data);
   } catch (err) {
+    console.error('❌ POST /api/answers xətası:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
